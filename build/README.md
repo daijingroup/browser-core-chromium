@@ -4,20 +4,19 @@
 
 ## Workspace model
 
-Build tooling should create an external workspace containing:
+The development tooling creates an external workspace containing:
 
 ```text
 workspace/
 ├── depot_tools/
-├── chromium/
-│   └── src/
-├── core/
-├── community-derived/
-├── kitech-derived/
-└── out/
+└── chromium/
+    └── src/
+        └── out/
+            ├── KiTechDev/
+            └── KiTechRelease/
 ```
 
-Only `core/` is sourced from this repository.
+The KiTech core repository remains separate from the large Chromium checkout.
 
 ## Layer application order
 
@@ -30,19 +29,52 @@ browser-community-derived-chromium
    ↓
 browser-kitech-derived-chromium
    ↓
-GN/Ninja build
+GN / autoninja build
 ```
 
 A core-only build MUST remain possible without either upper layer.
 
+## Implemented core build flow
+
+```text
+bootstrap-linux.sh
+      ↓
+install-deps-linux.sh
+      ↓
+verify-pin.sh
+      ↓
+apply-patches.sh
+      ↓
+configure.sh
+      ↓
+build.sh
+      ↓
+smoke-test.sh
+```
+
+`dev-machine-test.sh` executes the complete flow for the initial Linux x86-64 development host.
+
+## Profiles
+
+- `dev` → `out/KiTechDev`, component build intended to reduce local link cost while retaining DCHECK coverage.
+- `release` → `out/KiTechRelease`, non-component release-like validation build. It is not the final signed production configuration.
+
+GN arguments are versioned under `config/gn/` and copied into the selected output directory before `gn gen`.
+
 ## CI
 
-Normal GitHub-hosted runners may be used for lightweight validation such as manifest checks, formatting, patch metadata checks, and small unit tests.
+Normal GitHub-hosted runners validate manifests and shell syntax.
 
-Full Chromium builds should run only on infrastructure with sufficient CPU, memory, and persistent storage, such as an appropriately sized larger runner or self-hosted runner.
+Full Chromium builds should run only on infrastructure with sufficient CPU, memory, disk, and persistent caching, such as an appropriately sized larger runner or self-hosted runner.
 
 ## Reproducibility
 
-Build inputs MUST be explicit and pinned where practical. Build tooling MUST NOT silently select a newer Chromium revision than the one declared by `config/chromium.toml`.
+Build tooling MUST NOT silently select a newer Chromium revision than `config/chromium.toml`.
 
-Actual checkout/build scripts will be added once the initial Chromium revision and supported development platform are selected.
+`depot_tools` is also pinned and its source auto-update is disabled by the core bootstrap. Every successful build writes `kitech-build-manifest.json` containing the critical declared and actual source/tool revisions plus the GN configuration hash.
+
+See:
+
+- `docs/dev-machine.md`
+- `docs/upstream.md`
+- `docs/provenance.md`
