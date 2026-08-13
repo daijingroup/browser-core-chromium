@@ -1,0 +1,6 @@
+# Release-like local validation preset. Production release hardening/signing is separate.
+is_debug = false
+is_component_build = false
+dcheck_always_on = true
+symbol_level = 1
+use_remoteexec = false
