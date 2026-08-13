@@ -1,8 +1,12 @@
 schema_version = 1
 engine = "chromium"
 source = "https://chromium.googlesource.com/chromium/src.git"
-state = "uninitialized"
+state = "pinned"
 
-# Set both fields when the first supported Chromium revision is selected.
-revision = ""
-milestone = 0
+# Initial KiTech stable baseline.
+milestone = 151
+tag = "151.0.7922.97"
+revision = "dcfe8375afc319e40fec7cf87ce51feb3384bd5e"
+
+# Stable may advance within M151 for reviewed security fixes without changing
+# the milestone. New milestones must follow the browser-spec promotion policy.
