@@ -51,6 +51,18 @@ This bootstraps the pinned toolchain/Chromium checkout, installs upstream Linux 
 
 See [docs/dev-machine.md](docs/dev-machine.md) for requirements, workspace options, and individual stages.
 
+## Self-hosted full builds
+
+A manual **Full Chromium Core Build** workflow targets a dedicated repository-scoped runner with these labels:
+
+```text
+self-hosted, linux, x64, chromium-builder
+```
+
+Runner setup is split into machine preparation and short-lived GitHub registration so the registration token is not consumed during the Chromium checkout.
+
+See [docs/self-hosted-runner.md](docs/self-hosted-runner.md).
+
 ## Boundaries
 
 This repository MUST NOT depend on:
@@ -65,17 +77,17 @@ KiTech product features such as Porticullus integration, browser sync, UI/produc
 ## Repository layout
 
 ```text
-.github/        lightweight repository validation
+.github/        lightweight repository validation and manual full-build workflow
 build/          build/workspace contract
 config/         pinned upstream, API, patch and GN configuration
-docs/           development, maintenance and provenance documentation
+docs/           development, maintenance, runner and provenance documentation
 interfaces/     contracts exposed to upper layers
 patches/        neutral KiTech-authored Chromium patches
-scripts/        bootstrap, configure, build and smoke-test tooling
+scripts/        bootstrap, runner, configure, build and smoke-test tooling
 ```
 
 ## Status
 
-The core is ready for its first Linux x86-64 development-machine build test. No neutral Chromium patches are currently required, so `config/patches.list` is intentionally empty.
+The core is ready for its first Linux x86-64 development-machine build test and for registration of a dedicated self-hosted Chromium builder. No neutral Chromium patches are currently required, so `config/patches.list` is intentionally empty.
 
 This repository is private. No public licence grant is implied by access to its contents.
