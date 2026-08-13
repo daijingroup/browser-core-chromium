@@ -1,0 +1,4 @@
+schema_version = 1
+source = "https://chromium.googlesource.com/chromium/tools/depot_tools.git"
+revision = "cad42f6eae1307a35988840c847d16dae68cbc00"
+auto_update = false
