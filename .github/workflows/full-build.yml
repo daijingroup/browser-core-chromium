@@ -1,0 +1,37 @@
+name: Full Chromium Core Build
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: chromium-core-full-build
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: [self-hosted, linux, x64, chromium-builder]
+    timeout-minutes: 360
+    steps:
+      - name: Checkout core
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Validate core manifests
+        run: python scripts/validate-config.py
+
+      - name: Build and smoke-test pinned Chromium core
+        shell: bash
+        env:
+          KITECH_SKIP_DEPS: '1'
+        run: |
+          workspace="${KITECH_BROWSER_WORKSPACE:-$HOME/kitech-browser-ci-workspace}"
+          bash scripts/dev-machine-test.sh "$workspace"
