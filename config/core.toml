@@ -1,0 +1,6 @@
+schema_version = 1
+core_api = 1
+engine = "chromium"
+default_profile = "dev"
+default_target = "chrome"
+supported_hosts = ["linux-x86_64"]
