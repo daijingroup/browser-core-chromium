@@ -1,0 +1,15 @@
+# Local build/workspace state
+.work/
+.chromium/
+depot_tools/
+out/
+
+# Python/depot_tools helpers
+.venv/
+__pycache__/
+*.py[cod]
+
+# Editors/OS
+.DS_Store
+.idea/
+.vscode/
