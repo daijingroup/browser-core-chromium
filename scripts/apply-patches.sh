@@ -7,7 +7,7 @@ src="$(chromium_src "$workspace")"
 manifest="$CORE_ROOT/config/patches.list"
 
 [[ -d "$src/.git" ]] || fail "Chromium checkout not found: $src"
-"$CORE_ROOT/scripts/verify-pin.sh" "$workspace"
+bash "$CORE_ROOT/scripts/verify-pin.sh" "$workspace"
 
 count=0
 while IFS= read -r entry || [[ -n "$entry" ]]; do
