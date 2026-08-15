@@ -27,6 +27,8 @@ git -C "$depot" fetch origin "$depot_revision"
 git -C "$depot" checkout --detach "$depot_revision"
 
 activate_depot_tools "$workspace"
+info "Bootstrapping pinned depot_tools runtime"
+"$depot/ensure_bootstrap"
 gclient --version >/dev/null
 
 chromium_root_path="$(chromium_root "$workspace")"
@@ -39,17 +41,18 @@ if [[ ! -f "$chromium_root_path/.gclient" ]]; then
   if [[ -n "$(find "$chromium_root_path" -mindepth 1 -maxdepth 1 -print -quit)" ]]; then
     fail "Chromium workspace exists but is not a gclient checkout: $chromium_root_path"
   fi
-  info "Creating Chromium checkout"
+  info "Creating shallow Chromium checkout"
   (
     cd "$chromium_root_path"
-    fetch --nohooks chromium
+    fetch --no-history --nohooks chromium
   )
 fi
 
-info "Synchronising Chromium $tag at immutable revision $revision"
+info "Synchronising Chromium $tag at immutable revision $revision without full git history"
 (
   cd "$chromium_root_path"
   gclient sync \
+    --no-history \
     --nohooks \
     --force \
     --delete_unversioned_trees \
