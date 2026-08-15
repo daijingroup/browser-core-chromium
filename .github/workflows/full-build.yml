@@ -2,6 +2,8 @@ name: Full Chromium Core Build
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
 
 permissions:
   contents: read
@@ -12,7 +14,7 @@ concurrency:
 
 jobs:
   build:
-    runs-on: [self-hosted, linux, x64, chromium-builder]
+    runs-on: [self-hosted, linux, x64]
     timeout-minutes: 360
     steps:
       - name: Checkout core
