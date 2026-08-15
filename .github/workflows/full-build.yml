@@ -28,10 +28,56 @@ jobs:
       - name: Validate core manifests
         run: python scripts/validate-config.py
 
-      - name: Build and smoke-test pinned Chromium core
+      - name: Synchronise pinned Chromium checkout
         shell: bash
-        env:
-          KITECH_SKIP_DEPS: '1'
         run: |
           workspace="${KITECH_BROWSER_WORKSPACE:-$HOME/kitech-browser-ci-workspace}"
-          bash scripts/dev-machine-test.sh "$workspace"
+          bash scripts/bootstrap-linux.sh "$workspace"
+          export DEPOT_TOOLS_UPDATE=0
+          export PATH="$workspace/depot_tools:$PATH"
+          (cd "$workspace/chromium" && gclient runhooks)
+          bash scripts/verify-pin.sh "$workspace"
+          bash scripts/apply-patches.sh "$workspace"
+
+      - name: Configure release-like test build
+        shell: bash
+        run: |
+          workspace="${KITECH_BROWSER_WORKSPACE:-$HOME/kitech-browser-ci-workspace}"
+          bash scripts/configure.sh "$workspace" release
+
+      - name: Build Chromium
+        shell: bash
+        run: |
+          workspace="${KITECH_BROWSER_WORKSPACE:-$HOME/kitech-browser-ci-workspace}"
+          bash scripts/build.sh "$workspace" release chrome
+
+      - name: Smoke test Chromium
+        shell: bash
+        run: |
+          workspace="${KITECH_BROWSER_WORKSPACE:-$HOME/kitech-browser-ci-workspace}"
+          bash scripts/smoke-test.sh "$workspace" release
+
+      - name: Package runnable test runtime
+        id: package
+        shell: bash
+        run: |
+          workspace="${KITECH_BROWSER_WORKSPACE:-$HOME/kitech-browser-ci-workspace}"
+          package_output="$(bash scripts/package-runtime.sh "$workspace" release)"
+          printf '%s\n' "$package_output"
+          archive="$(printf '%s\n' "$package_output" | sed -n 's/^archive=//p' | tail -n 1)"
+          checksum="$(printf '%s\n' "$package_output" | sed -n 's/^checksum=//p' | tail -n 1)"
+          test -f "$archive"
+          test -f "$checksum"
+          echo "archive=$archive" >> "$GITHUB_OUTPUT"
+          echo "checksum=$checksum" >> "$GITHUB_OUTPUT"
+
+      - name: Upload runnable browser artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: browser-core-chromium-m151-linux-x64-${{ github.run_number }}
+          path: |
+            ${{ steps.package.outputs.archive }}
+            ${{ steps.package.outputs.checksum }}
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 7
