@@ -14,10 +14,18 @@ src="$(chromium_src "$workspace")"
 out_name="$(out_dir_name "$profile")"
 [[ -f "$src/out/$out_name/args.gn" ]] || fail "build is not configured; run configure.sh first"
 
-info "Building Chromium target '$target' with profile '$profile'"
+jobs="${KITECH_BUILD_JOBS:-}"
+build_args=(-C "out/$out_name")
+if [[ -n "$jobs" ]]; then
+  [[ "$jobs" =~ ^[1-9][0-9]*$ ]] || fail "KITECH_BUILD_JOBS must be a positive integer"
+  build_args+=("-j$jobs")
+fi
+build_args+=("$target")
+
+info "Building Chromium target '$target' with profile '$profile'${jobs:+ using $jobs parallel jobs}"
 (
   cd "$src"
-  autoninja -C "out/$out_name" "$target"
+  autoninja "${build_args[@]}"
 )
 
 info "Writing build provenance manifest"
