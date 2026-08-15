@@ -39,6 +39,21 @@ jobs:
           bash scripts/verify-pin.sh "$workspace"
           bash scripts/apply-patches.sh "$workspace"
 
+      - name: Check build capacity
+        shell: bash
+        run: |
+          set -euo pipefail
+          workspace="${KITECH_BROWSER_WORKSPACE:-$HOME/kitech-browser-ci-workspace}"
+          available_kb="$(df -Pk "$workspace" | awk 'NR==2 {print $4}')"
+          required_kb=$((50 * 1024 * 1024))
+          if (( available_kb < required_kb )); then
+            echo "Chromium build requires at least 50 GiB free in the builder workspace filesystem; only $((available_kb / 1024 / 1024)) GiB is available." >&2
+            echo "Run the manual 'Recreate Shallow Chromium Workspace' workflow before building." >&2
+            exit 1
+          fi
+          df -h "$workspace"
+          free -h
+
       - name: Configure release-like test build
         shell: bash
         run: |
@@ -47,6 +62,8 @@ jobs:
 
       - name: Build Chromium
         shell: bash
+        env:
+          KITECH_BUILD_JOBS: '2'
         run: |
           workspace="${KITECH_BROWSER_WORKSPACE:-$HOME/kitech-browser-ci-workspace}"
           bash scripts/build.sh "$workspace" release chrome
