@@ -10,14 +10,18 @@ out_name="$(out_dir_name "$profile")"
 out="$src/out/$out_name"
 
 [[ -x "$out/chrome" ]] || fail "Chromium binary not found: $out/chrome"
+require_cmd tar
+require_cmd sha256sum
 
 milestone="$(toml_value "$CORE_ROOT/config/chromium.toml" milestone)"
 tag="$(chromium_tag)"
 artifact_root="$workspace/artifacts"
 artifact_name="kitech-browser-core-chromium-m${milestone}-linux-x64"
 stage="$artifact_root/$artifact_name"
+archive="$artifact_root/${artifact_name}.tar.gz"
+checksum="$archive.sha256"
 
-rm -rf "$stage"
+rm -rf "$stage" "$archive" "$checksum"
 mkdir -p "$stage"
 
 copy_required() {
@@ -69,7 +73,7 @@ Profile: $profile
 Architecture: linux-x64
 
 This is an unsigned development/test artifact, not a production browser release.
-Run from this directory with:
+Extract the tar archive and run from the extracted directory with:
 
   ./chrome --user-data-dir=./test-profile
 
@@ -81,6 +85,15 @@ if [[ -f "$out/kitech-build-provenance.json" ]]; then
   cp -a "$out/kitech-build-provenance.json" "$stage/"
 fi
 
-size="$(du -sh "$stage" | awk '{print $1}')"
-info "Runtime artifact staged: $stage ($size)"
-printf '%s\n' "$stage"
+stage_size="$(du -sh "$stage" | awk '{print $1}')"
+info "Runtime staged: $stage ($stage_size)"
+
+(
+  cd "$artifact_root"
+  tar -czf "$(basename "$archive")" "$artifact_name"
+  sha256sum "$(basename "$archive")" > "$(basename "$checksum")"
+)
+
+archive_size="$(du -sh "$archive" | awk '{print $1}')"
+info "Runtime archive ready: $archive ($archive_size)"
+printf 'archive=%s\nchecksum=%s\n' "$archive" "$checksum"
