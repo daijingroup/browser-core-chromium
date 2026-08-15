@@ -2,8 +2,6 @@ name: Full Chromium Core Build
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
 
 permissions:
   contents: read
