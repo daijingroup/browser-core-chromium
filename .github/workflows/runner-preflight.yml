@@ -1,0 +1,36 @@
+name: Chromium Runner Preflight
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  preflight:
+    runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 10
+    steps:
+      - name: Inspect Chromium builder resources
+        shell: bash
+        run: |
+          set -euo pipefail
+          workspace="${KITECH_BROWSER_WORKSPACE:-$HOME/kitech-browser-ci-workspace}"
+          echo "runner=$(hostname)"
+          echo "workspace=$workspace"
+          echo "cpus=$(nproc)"
+          echo
+          free -h
+          echo
+          df -hT / /srv /home /tmp 2>/dev/null || true
+          if [[ -d /mnt ]]; then
+            df -hT /mnt 2>/dev/null || true
+          fi
+          echo
+          if [[ -d "$workspace" ]]; then
+            du -sh "$workspace" || true
+            du -sh "$workspace/chromium" 2>/dev/null || true
+            du -sh "$workspace/chromium/src/out" 2>/dev/null || true
+          fi
