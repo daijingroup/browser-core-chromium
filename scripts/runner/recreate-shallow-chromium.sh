@@ -18,7 +18,8 @@ if [[ -d "$chromium_dir" ]]; then
   rm -rf --one-file-system "$chromium_dir"
 fi
 
-info "Recreating Chromium checkout in shallow/no-history mode"
+info "Recreating Chromium checkout in shallow/no-history mode at the pinned revision"
+export KITECH_GCLIENT_VERBOSE=1
 bash "$CORE_ROOT/scripts/bootstrap-linux.sh" "$workspace"
 
 activate_depot_tools "$workspace"
