@@ -53,8 +53,6 @@ info "Synchronising Chromium $tag at immutable revision $revision"
     --nohooks \
     --force \
     --delete_unversioned_trees \
-    --with_branch_heads \
-    --with_tags \
     --revision "src@$revision"
 )
 
