@@ -2,12 +2,14 @@ name: Full Chromium Core Build
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
 
 permissions:
   contents: read
 
 concurrency:
-  group: chromium-core-full-build-v2
+  group: chromium-core-full-build-v3
   cancel-in-progress: false
 
 jobs:
