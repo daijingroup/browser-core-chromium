@@ -11,13 +11,15 @@ permissions:
 jobs:
   preflight:
     runs-on: [self-hosted, linux, x64]
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - name: Inspect Chromium builder resources
         shell: bash
         run: |
           set -euo pipefail
           workspace="${KITECH_BROWSER_WORKSPACE:-$HOME/kitech-browser-ci-workspace}"
+          chromium="$workspace/chromium"
+          src="$chromium/src"
           echo "runner=$(hostname)"
           echo "workspace=$workspace"
           echo "cpus=$(nproc)"
@@ -30,7 +32,16 @@ jobs:
           fi
           echo
           if [[ -d "$workspace" ]]; then
+            echo "--- workspace totals ---"
             du -sh "$workspace" || true
-            du -sh "$workspace/chromium" 2>/dev/null || true
-            du -sh "$workspace/chromium/src/out" 2>/dev/null || true
+            du -sh "$chromium" 2>/dev/null || true
+            du -sh "$src" 2>/dev/null || true
+            du -sh "$src/.git" 2>/dev/null || true
+            du -sh "$src/out" 2>/dev/null || true
+            echo
+            echo "--- largest Chromium root entries ---"
+            du -x -h --max-depth=1 "$chromium" 2>/dev/null | sort -h | tail -20 || true
+            echo
+            echo "--- largest src entries ---"
+            du -x -h --max-depth=1 "$src" 2>/dev/null | sort -h | tail -25 || true
           fi
