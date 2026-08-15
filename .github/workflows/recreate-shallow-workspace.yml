@@ -1,0 +1,32 @@
+name: Recreate Shallow Chromium Workspace
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: chromium-workspace-maintenance
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 240
+    steps:
+      - name: Checkout core
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Recreate shallow Chromium checkout
+        shell: bash
+        run: |
+          workspace="${KITECH_BROWSER_WORKSPACE:-$HOME/kitech-browser-ci-workspace}"
+          bash scripts/runner/recreate-shallow-chromium.sh "$workspace"
