@@ -33,30 +33,63 @@ gclient --version >/dev/null
 
 chromium_root_path="$(chromium_root "$workspace")"
 chromium_src_path="$(chromium_src "$workspace")"
+source_url="$(chromium_source)"
 revision="$(chromium_revision)"
 tag="$(chromium_tag)"
 
 mkdir -p "$chromium_root_path"
-if [[ ! -f "$chromium_root_path/.gclient" ]]; then
-  if [[ -n "$(find "$chromium_root_path" -mindepth 1 -maxdepth 1 -print -quit)" ]]; then
-    fail "Chromium workspace exists but is not a gclient checkout: $chromium_root_path"
+
+# The Chromium solution itself is pinned by Git. gclient is configured as
+# unmanaged so it synchronises DEPS without attempting a second root fetch.
+if [[ ! -d "$chromium_src_path/.git" ]]; then
+  if [[ -e "$chromium_src_path" ]]; then
+    fail "Chromium source path exists but is not a git checkout: $chromium_src_path"
   fi
-  info "Creating shallow Chromium checkout"
-  (
-    cd "$chromium_root_path"
-    fetch --no-history --nohooks chromium
-  )
+  info "Initialising shallow Chromium root checkout"
+  git init "$chromium_src_path"
+  git -C "$chromium_src_path" remote add origin "$source_url"
+else
+  git -C "$chromium_src_path" remote set-url origin "$source_url"
 fi
 
-info "Synchronising Chromium $tag at immutable revision $revision without full git history"
+if ! git -C "$chromium_src_path" cat-file -e "$revision^{commit}" 2>/dev/null; then
+  info "Fetching Chromium $tag as a shallow root checkout"
+  git -C "$chromium_src_path" fetch \
+    --progress \
+    --depth=1 \
+    --no-tags \
+    origin "refs/tags/$tag"
+
+  fetched_revision="$(git -C "$chromium_src_path" rev-parse 'FETCH_HEAD^{commit}')"
+  [[ "$fetched_revision" == "$revision" ]] || \
+    fail "Chromium tag $tag resolved to $fetched_revision; expected $revision"
+fi
+
+info "Checking out immutable Chromium revision $revision"
+git -C "$chromium_src_path" checkout --detach --force "$revision"
+git -C "$chromium_src_path" reset --hard "$revision"
+
+info "Configuring gclient to leave the pinned Chromium root unmanaged"
+rm -f "$chromium_root_path/.gclient"
 (
   cd "$chromium_root_path"
-  gclient sync \
-    --no-history \
-    --nohooks \
-    --force \
-    --delete_unversioned_trees \
-    --revision "src@$revision"
+  gclient config --name src --unmanaged "$source_url"
+)
+
+info "Synchronising Chromium $tag dependencies without full git history"
+gclient_args=(
+  sync
+  --no-history
+  --nohooks
+  --force
+  --delete_unversioned_trees
+)
+if [[ "${KITECH_GCLIENT_VERBOSE:-0}" == "1" ]]; then
+  gclient_args+=(--verbose)
+fi
+(
+  cd "$chromium_root_path"
+  gclient "${gclient_args[@]}"
 )
 
 [[ -d "$chromium_src_path/.git" ]] || fail "Chromium source checkout was not created"
